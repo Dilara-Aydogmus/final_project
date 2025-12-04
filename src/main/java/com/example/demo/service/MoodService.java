@@ -5,8 +5,6 @@ import com.example.demo.model.MoodType;
 import com.example.demo.model.User;
 import com.example.demo.repository.MoodEntryRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,7 +17,6 @@ public class MoodService {
 
     private final MoodEntryRepository moodRepo;
 
-    @CacheEvict(value = "moodHistory", allEntries = true)
     public MoodEntry createMood(User user, MoodType moodType, String note) {
         MoodEntry entry = MoodEntry.builder()
                 .user(user)
@@ -37,14 +34,12 @@ public class MoodService {
         return entries.isEmpty() ? null : entries.get(0);
     }
 
-    @Cacheable(value = "moodHistory", key = "#user.id + '_' + #days")
     public List<MoodEntry> getHistory(User user, int days) {
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime start = end.minusDays(days);
         return moodRepo.findByUserAndCreatedAtBetween(user, start, end);
     }
 
-    @CacheEvict(value = "moodHistory", allEntries = true)
     public MoodEntry updateMood(Long id, MoodType moodType, String note, User user) {
         MoodEntry entry = moodRepo.findById(id).orElse(null);
         if (entry == null || !entry.getUser().getId().equals(user.getId())) {
@@ -55,7 +50,6 @@ public class MoodService {
         return moodRepo.save(entry);
     }
 
-    @CacheEvict(value = "moodHistory", allEntries = true)
     public void deleteMood(Long id, User user) {
         MoodEntry entry = moodRepo.findById(id).orElse(null);
         if (entry != null && entry.getUser().getId().equals(user.getId())) {
