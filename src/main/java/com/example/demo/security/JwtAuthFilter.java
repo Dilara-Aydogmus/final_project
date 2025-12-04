@@ -28,11 +28,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // 🔥 LOGIN ve REGISTER endpointlerini JWT kontrolünden çıkar
+        String path = request.getServletPath();
+        if (path.startsWith("/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String username;
 
-        // Header yoksa veya Bearer ile başlamıyorsa devam
+        // Header yoksa devam et
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
