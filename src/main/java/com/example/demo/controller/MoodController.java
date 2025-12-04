@@ -81,6 +81,13 @@ public class MoodController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping
+    public ResponseEntity<List<MoodEntry>> getAllMoods() {
+        User user = getCurrentUserOrThrow();
+        List<MoodEntry> list = moodService.getHistory(user, 30); // 30 gün
+        return ResponseEntity.ok(list);
+    }
+
     @lombok.Data
     public static class MoodRequest {
         private MoodType moodType;
