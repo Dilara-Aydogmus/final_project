@@ -1,30 +1,59 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        EC2_CREDENTIALS = credentials('ec2key')
+        IMAGE_NAME = "dilaraydogmus/mood-tracker-api"
+    }
+
     stages {
-        stage('Clone') {
+
+        stage('Checkout Code') {
             steps {
-                git 'https://github.com/Dilara-Aydogmus/final_project.git'
+                git branch: 'main', url: 'https://github.com/Dilara-Aydogmus/final_project.git'
             }
         }
 
-        stage('Build JAR') {
+        stage('Maven Build') {
             steps {
-                sh './mvnw clean package -DskipTests'
+                sh 'chmod +x mvnw'   // <-- ÇALIŞTIRMA İZNİ VERİYORUZ
+                sh './mvnw -B clean package -DskipTests'
             }
         }
 
-        stage('Docker Build') {
+        stage('Build Docker Image') {
             steps {
-                sh 'docker build -t moodapp .'
+                sh "docker build -t ${IMAGE_NAME}:latest ."
             }
         }
 
-        stage('Docker Run') {
+        stage('Docker Login') {
             steps {
-                sh 'docker stop moodapp || true'
-                sh 'docker rm moodapp || true'
-                sh 'docker run -d --name moodapp -p 8081:8080 moodapp'
+                sh "echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin"
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh "docker push ${IMAGE_NAME}:latest"
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                sshagent(['ec2key']) {
+                    sh '''
+                    ssh -o StrictHostKeyChecking=no ubuntu@16.171.9.237 '
+                        sudo docker stop moodapp || true &&
+                        sudo docker rm moodapp || true &&
+                        sudo docker pull dilaraydogmus/mood-tracker-api:latest &&
+                        cd /home/ubuntu &&
+                        sudo docker compose down || true &&
+                        sudo docker compose up -d
+                    '
+                    '''
+                }
             }
         }
     }
