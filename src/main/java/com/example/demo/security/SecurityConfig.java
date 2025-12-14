@@ -32,26 +32,19 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        // JWT serbest bıraktığımız endpointler
+                        // Authentication/Registration → herkes için açık
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Vaadin için gereken izinler
-                        .requestMatchers(
-                                "/login",
-                                "/VAADIN/**",
-                                "/frontend/**",
-                                "/webjars/**",
-                                "/images/**",
-                                "/icons/**",
-                                "/styles/**",
-                                "/manifest.webmanifest",
-                                "/sw.js",
-                                "/offline.html"
-                        ).permitAll()
-
-                        // Sağlık kontrolü
+                        // Health check → açık
                         .requestMatchers("/actuator/**").permitAll()
 
+                        // Kubernetes test endpoint → tamamen açık
+                        .requestMatchers("/k8s-info", "/k8s-info/**").permitAll()
+
+                        // CORS preflight → açık
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Diğer tüm endpointler → JWT ister
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -76,7 +69,7 @@ public class SecurityConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins("*")
-                        .allowedMethods("*")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }
         };

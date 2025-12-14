@@ -28,25 +28,41 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // 🔥 LOGIN ve REGISTER endpointlerini JWT kontrolünden çıkar
         String path = request.getServletPath();
-        if (path.startsWith("/auth")) {
+
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        //  Auth endpointleri  JWT yok
+        if (path.startsWith("/api/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        //  Kubernetes test endpoint JWT yok
+        if (path.startsWith("/k8s-info")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // actuator JWT yok
+        if (path.startsWith("/actuator")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String username;
 
-        // Header yoksa devam et
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
-        username = jwtUtil.extractUsername(jwt);
+        String jwt = authHeader.substring(7);
+        String username = jwtUtil.extractUsername(jwt);
 
         if (username != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -55,6 +71,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     userDetailsService.loadUserByUsername(username);
 
             if (jwtUtil.isTokenValid(jwt, userDetails)) {
+
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
