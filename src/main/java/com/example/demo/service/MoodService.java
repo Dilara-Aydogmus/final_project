@@ -5,6 +5,8 @@ import com.example.demo.model.MoodType;
 import com.example.demo.model.User;
 import com.example.demo.repository.MoodEntryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -17,6 +19,10 @@ public class MoodService {
 
     private final MoodEntryRepository moodRepo;
 
+    // ===============================
+    // CREATE :cache temizlenir
+    // ===============================
+    @CacheEvict(value = {"todayMood", "historyMood"}, key = "#user.id")
     public MoodEntry createMood(User user, MoodType moodType, String note) {
         MoodEntry entry = MoodEntry.builder()
                 .user(user)
@@ -27,19 +33,36 @@ public class MoodService {
         return moodRepo.save(entry);
     }
 
-    public MoodEntry getTodayMood(User user) {
+    // ===============================
+    // SADECE ID CACHE'LENİR
+    // ===============================
+    @Cacheable(value = "todayMood", key = "#user.id")
+    public Long getTodayMoodId(User user) {
+
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = start.plusDays(1);
-        List<MoodEntry> entries = moodRepo.findByUserAndCreatedAtBetween(user, start, end);
-        return entries.isEmpty() ? null : entries.get(0);
+
+        return moodRepo.findByUserAndCreatedAtBetween(user, start, end)
+                .stream()
+                .findFirst()
+                .map(MoodEntry::getId)
+                .orElse(null);
     }
 
+    // ===============================
+    // HISTORY
+    // ===============================
+    @Cacheable(value = "historyMood", key = "#user.id + '-' + #days")
     public List<MoodEntry> getHistory(User user, int days) {
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime start = end.minusDays(days);
         return moodRepo.findByUserAndCreatedAtBetween(user, start, end);
     }
 
+    // ===============================
+    // UPDATE  cache temizlenir
+    // ===============================
+    @CacheEvict(value = {"todayMood", "historyMood"}, key = "#user.id")
     public MoodEntry updateMood(Long id, MoodType moodType, String note, User user) {
         MoodEntry entry = moodRepo.findById(id).orElse(null);
         if (entry == null || !entry.getUser().getId().equals(user.getId())) {
@@ -50,6 +73,10 @@ public class MoodService {
         return moodRepo.save(entry);
     }
 
+    // ===============================
+    // DELETE cache temizlenir
+    // ===============================
+    @CacheEvict(value = {"todayMood", "historyMood"}, key = "#user.id")
     public void deleteMood(Long id, User user) {
         MoodEntry entry = moodRepo.findById(id).orElse(null);
         if (entry != null && entry.getUser().getId().equals(user.getId())) {

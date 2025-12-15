@@ -1,8 +1,11 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.MoodResponse;
+import com.example.demo.mapper.MoodMapper;
 import com.example.demo.model.MoodEntry;
 import com.example.demo.model.MoodType;
 import com.example.demo.model.User;
+import com.example.demo.repository.MoodEntryRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.MoodService;
 import lombok.RequiredArgsConstructor;
@@ -20,60 +23,91 @@ public class MoodController {
 
     private final MoodService moodService;
     private final UserRepository userRepository;
+    private final MoodEntryRepository moodEntryRepository;
 
     private User getCurrentUserOrThrow() {
-        Authentication auth = SecurityContextHolder
-                .getContext()
-                .getAuthentication();
-
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 
         return userRepository.findByUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found: " + username));
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
     }
 
+    // ===============================
+    // CREATE (entity dönmesi OK)
+    // ===============================
     @PostMapping
-    public ResponseEntity<MoodEntry> createMood(
-            @RequestBody MoodRequest request
-    ) {
+    public ResponseEntity<MoodEntry> createMood(@RequestBody MoodRequest request) {
         User user = getCurrentUserOrThrow();
-        MoodEntry entry = moodService.createMood(user, request.getMoodType(), request.getNote());
-        return ResponseEntity.ok(entry);
+        return ResponseEntity.ok(
+                moodService.createMood(
+                        user,
+                        request.getMoodType(),
+                        request.getNote()
+                )
+        );
     }
 
+    // ===============================
+    // TODAY DTO + MAPPER
+    // ===============================
     @GetMapping("/today")
-    public ResponseEntity<MoodEntry> getTodayMood() {
+    public ResponseEntity<MoodResponse> getTodayMood() {
+
         User user = getCurrentUserOrThrow();
-        MoodEntry entry = moodService.getTodayMood(user);
-        if (entry == null) {
+
+        Long moodId = moodService.getTodayMoodId(user);
+        if (moodId == null) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(entry);
+
+        MoodEntry entry = moodEntryRepository.findById(moodId).orElseThrow();
+
+        return ResponseEntity.ok(MoodMapper.toDto(entry));
     }
 
+    // ===============================
+    // HISTORY  DTO
+    // ===============================
     @GetMapping("/history")
-    public ResponseEntity<List<MoodEntry>> getHistory(
+    public ResponseEntity<List<MoodResponse>> getHistory(
             @RequestParam(defaultValue = "7") int days
     ) {
         User user = getCurrentUserOrThrow();
-        List<MoodEntry> history = moodService.getHistory(user, days);
-        return ResponseEntity.ok(history);
+
+        return ResponseEntity.ok(
+                moodService.getHistory(user, days)
+                        .stream()
+                        .map(MoodMapper::toDto)
+                        .toList()
+        );
     }
 
+    // ===============================
+    // UPDATE
+    // ===============================
     @PutMapping("/{id}")
     public ResponseEntity<MoodEntry> updateMood(
             @PathVariable Long id,
             @RequestBody MoodRequest request
     ) {
         User user = getCurrentUserOrThrow();
-        MoodEntry updated = moodService.updateMood(id, request.getMoodType(), request.getNote(), user);
+        MoodEntry updated = moodService.updateMood(
+                id,
+                request.getMoodType(),
+                request.getNote(),
+                user
+        );
+
         if (updated == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(updated);
     }
 
+    // ===============================
+    // DELETE
+    // ===============================
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMood(@PathVariable Long id) {
         User user = getCurrentUserOrThrow();
@@ -81,13 +115,9 @@ public class MoodController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping
-    public ResponseEntity<List<MoodEntry>> getAllMoods() {
-        User user = getCurrentUserOrThrow();
-        List<MoodEntry> list = moodService.getHistory(user, 30); // 30 gün
-        return ResponseEntity.ok(list);
-    }
-
+    // ===============================
+    // REQUEST BODY
+    // ===============================
     @lombok.Data
     public static class MoodRequest {
         private MoodType moodType;
