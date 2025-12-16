@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         IMAGE_NAME = "dilaraaydogmus/mood-tracker-api"
-        DOCKERHUB_CREDS = credentials('dockerhub')
     }
 
     stages {
@@ -18,7 +17,7 @@ pipeline {
         stage('Maven Build') {
             steps {
                 sh 'chmod +x mvnw'
-                sh './mvnw clean package -DskipTests'
+                sh './mvnw -B clean package -DskipTests'
             }
         }
 
@@ -30,11 +29,13 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                sh '''
-                echo $DOCKERHUB_CREDS_PSW | docker login \
-                  -u $DOCKERHUB_CREDS_USR \
-                  --password-stdin
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
             }
         }
 
@@ -48,26 +49,17 @@ pipeline {
             steps {
                 sshagent(['ec2key']) {
                     sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@16.171.9.237 << 'EOF'
-                      docker stop mood-app || true
-                      docker rm mood-app || true
-                      docker pull dilaraydogmus/mood-tracker-api:latest
-                      cd /home/ubuntu
-                      docker compose down || true
-                      docker compose up -d
-                    EOF
+                    ssh -o StrictHostKeyChecking=no ubuntu@16.171.9.237 "
+                        docker stop moodapp || true
+                        docker rm moodapp || true
+                        docker pull dilaraydogmus/mood-tracker-api:latest
+                        cd /home/ubuntu
+                        docker compose down || true
+                        docker compose up -d
+                    "
                     '''
                 }
             }
-        }
-    }
-
-    post {
-        success {
-            echo " Pipeline SUCCESS – Deploy tamamlandı"
-        }
-        failure {
-            echo " Pipeline FAILED – Logları kontrol et"
         }
     }
 }
