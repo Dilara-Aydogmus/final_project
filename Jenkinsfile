@@ -42,7 +42,7 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                sshagent(['ec2key']) {
+                ssh agent(['ec2key']) {
                     sh '''
                     ssh -o StrictHostKeyChecking=no ubuntu@16.171.9.237 '
                         sudo docker stop moodapp || true &&
