@@ -2,15 +2,15 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         IMAGE_NAME = "dilaraaydogmus/mood-tracker-api"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Dilara-Aydogmus/final_project.git'
+                git branch: 'master',
+                    url: 'https://github.com/Dilara-Aydogmus/final_project.git'
             }
         }
 
@@ -21,7 +21,7 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Docker Build') {
             steps {
                 sh "docker build -t ${IMAGE_NAME}:latest ."
             }
@@ -29,11 +29,17 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                sh "echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin"
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Docker Push') {
             steps {
                 sh "docker push ${IMAGE_NAME}:latest"
             }
@@ -44,12 +50,12 @@ pipeline {
                 sshagent(['ec2key']) {
                     sh '''
                     ssh -o StrictHostKeyChecking=no ubuntu@16.171.9.237 "
-                        sudo docker stop moodapp || true &&
-                        sudo docker rm moodapp || true &&
-                        sudo docker pull dilaraydogmus/mood-tracker-api:latest &&
-                        cd /home/ubuntu &&
-                        sudo docker compose down || true &&
-                        sudo docker compose up -d
+                        docker stop moodapp || true
+                        docker rm moodapp || true
+                        docker pull dilaraydogmus/mood-tracker-api:latest
+                        cd /home/ubuntu
+                        docker compose down || true
+                        docker compose up -d
                     "
                     '''
                 }
