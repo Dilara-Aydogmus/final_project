@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         EC2_CREDENTIALS = credentials('ec2key')
-        IMAGE_NAME = "dilaraydogmus/mood-tracker-api"
+        IMAGE_NAME = "dilaraaydogmus/mood-tracker-api"
     }
 
     stages {
@@ -45,9 +45,9 @@ pipeline {
                 ssh agent(['ec2key']) {
                     sh '''
                     ssh -o StrictHostKeyChecking=no ubuntu@16.171.9.237 '
-                        sudo docker stop moodapp || true &&
-                        sudo docker rm moodapp || true &&
-                        sudo docker pull dilaraydogmus/mood-tracker-api:latest &&
+                        sudo docker stop mood app || true &&
+                        sudo docker rm mood app || true &&
+                        sudo docker pull dilaraaydogmus/mood-tracker-api:latest &&
                         cd /home/ubuntu &&
                         sudo docker compose down || true &&
                         sudo docker compose up -d
