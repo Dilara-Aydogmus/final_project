@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "dilaraaydogmus/mood-tracker-api"
+        IMAGE_NAME = "dilaraydgms/mood-tracker-api"
     }
 
     stages {
@@ -52,7 +52,7 @@ pipeline {
                     ssh -o StrictHostKeyChecking=no ubuntu@16.171.9.237 "
                         docker stop moodapp || true
                         docker rm moodapp || true
-                        docker pull dilaraydogmus/mood-tracker-api:latest
+                        docker pull dilaraydgms/mood-tracker-api:latest
                         cd /home/ubuntu
                         docker compose down || true
                         docker compose up -d
