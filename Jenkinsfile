@@ -49,7 +49,7 @@ pipeline {
             steps {
                 sshagent(['ec2key']) {
                     sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@16.171.9.237 "
+                    ssh -o StrictHostKeyChecking=no ubuntu@16.170.247.195 "
                         docker stop moodapp || true
                         docker rm moodapp || true
                         docker pull dilaraydgms/mood-tracker-api:latest
