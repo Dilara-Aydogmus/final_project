@@ -1,16 +1,12 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kong-config
-data:
-  kong.yml: |
-    _format_version: "3.0"
+_format_version: "3.0"
 
-    services:
-      - name: mood-tracker
-        url: http://mood-tracker-service:8080
-        routes:
-          - name: mood-route
-            paths:
-              - /
-            strip_path: false
+services:
+  - name: mood-tracker
+    url: http://mood-tracker-service:8080
+
+routes:
+  - name: mood-route
+    service: mood-tracker
+    paths:
+      - /mood
+    strip_path: true

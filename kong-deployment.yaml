@@ -16,25 +16,20 @@ spec:
         - name: kong
           image: kong:3.6
           ports:
-            - containerPort: 6060   # proxy
-            - containerPort: 6061   # admin
+            - containerPort: 8000   # proxy
+            - containerPort: 8001   # admin
           env:
             - name: KONG_DATABASE
               value: "off"
-
             - name: KONG_DECLARATIVE_CONFIG
               value: /kong/kong.yml
-
             - name: KONG_PROXY_LISTEN
-              value: 0.0.0.0:6060
-
+              value: 0.0.0.0:8000
             - name: KONG_ADMIN_LISTEN
-              value: 0.0.0.0:6061
-
+              value: 0.0.0.0:8001
           volumeMounts:
             - name: kong-config
               mountPath: /kong
-
       volumes:
         - name: kong-config
           configMap:
