@@ -116,7 +116,7 @@ public class MoodController {
     }
 
     // ===============================
-    // REQUEST BODY
+    // REQUEST BODY, inner class
     // ===============================
     @lombok.Data
     public static class MoodRequest {
