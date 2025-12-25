@@ -21,11 +21,8 @@ public class MoodService {
 
     private final MoodEntryRepository moodRepo;
 
-    // ===============================
     // CREATE :cache temizlenir
-    // ===============================
     @CacheEvict(value = "todayMood", allEntries = true)
-    //@CacheEvict(value = {"todayMood", "historyMood"}, key = "#user.id")
     public MoodEntry createMood(User user, MoodType moodType, String note) {
         MoodEntry entry = MoodEntry.builder()
                 .user(user)
@@ -36,11 +33,8 @@ public class MoodService {
         return moodRepo.save(entry);
     }
 
-    // ===============================
     // SADECE ID CACHE'LENİR
-    // ===============================
     @Cacheable(value = "todayMood", key = "#user.id")
-    //@Cacheable(value = "todayMood", key = "#user.id + '-' + T(java.time.LocalDate).now()")
     public Long getTodayMoodId(User user) {
 
         LocalDateTime start = LocalDate.now().atStartOfDay();
@@ -53,19 +47,14 @@ public class MoodService {
                 .orElse(null);
     }
 
-    // ===============================
     // HISTORY
-    // ===============================
-    @Cacheable(value = "historyMood", key = "#user.id + '-' + #days")
     public List<MoodEntry> getHistory(User user, int days) {
         LocalDateTime end = LocalDateTime.now();
         LocalDateTime start = end.minusDays(days);
         return moodRepo.findByUserAndCreatedAtBetween(user, start, end);
     }
 
-    // ===============================
     // UPDATE  cache temizlenir
-    // ===============================
     @CacheEvict(value = {"todayMood", "historyMood"}, key = "#user.id")
     public MoodEntry updateMood(Long id, MoodType moodType, String note, User user) {
         MoodEntry entry = moodRepo.findById(id).orElse(null);
@@ -77,9 +66,7 @@ public class MoodService {
         return moodRepo.save(entry);
     }
 
-    // ===============================
     // DELETE cache temizlenir
-    // ===============================
     @CacheEvict(value = {"todayMood", "historyMood"}, key = "#user.id")
     public void deleteMood(Long id, User user) {
         MoodEntry entry = moodRepo.findById(id).orElse(null);
