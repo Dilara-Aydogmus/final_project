@@ -38,9 +38,6 @@ public class SecurityConfig {
                         // Health check → açık
                         .requestMatchers("/actuator/**").permitAll()
 
-                        // Kubernetes test endpoint → tamamen açık
-                        .requestMatchers("/k8s-info", "/k8s-info/**").permitAll()
-
                         // CORS preflight → açık
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
