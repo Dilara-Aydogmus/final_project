@@ -20,7 +20,8 @@ services:
       - appnet
 
   app:
-    image: dilaraydgms/mood-tracker-api:latest
+    build: .
+    image: mood-tracker-local
     container_name: moodapp
     restart: always
     depends_on:

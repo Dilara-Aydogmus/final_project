@@ -8,9 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Caching;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -22,7 +24,8 @@ public class MoodService {
     // ===============================
     // CREATE :cache temizlenir
     // ===============================
-    @CacheEvict(value = {"todayMood", "historyMood"}, key = "#user.id")
+    @CacheEvict(value = "todayMood", allEntries = true)
+    //@CacheEvict(value = {"todayMood", "historyMood"}, key = "#user.id")
     public MoodEntry createMood(User user, MoodType moodType, String note) {
         MoodEntry entry = MoodEntry.builder()
                 .user(user)
@@ -37,6 +40,7 @@ public class MoodService {
     // SADECE ID CACHE'LENİR
     // ===============================
     @Cacheable(value = "todayMood", key = "#user.id")
+    //@Cacheable(value = "todayMood", key = "#user.id + '-' + T(java.time.LocalDate).now()")
     public Long getTodayMoodId(User user) {
 
         LocalDateTime start = LocalDate.now().atStartOfDay();
@@ -44,7 +48,7 @@ public class MoodService {
 
         return moodRepo.findByUserAndCreatedAtBetween(user, start, end)
                 .stream()
-                .findFirst()
+                .max(Comparator.comparing(MoodEntry::getCreatedAt))
                 .map(MoodEntry::getId)
                 .orElse(null);
     }
