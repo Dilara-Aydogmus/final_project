@@ -32,16 +32,16 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        // Authentication/Registration → herkes için açık
+                        // Authentication/Registration  herkes için açık
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Health check → açık
+                        // Health check açık
                         .requestMatchers("/actuator/**").permitAll()
 
-                        // CORS preflight → açık
+                        // CORS preflight  açık
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Diğer tüm endpointler → JWT ister
+                        // Diğer tüm endpointler JWT ister
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

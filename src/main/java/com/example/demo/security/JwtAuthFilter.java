@@ -30,33 +30,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // --------------------------------------------------
+
         // CORS preflight  JWT KONTROLÜ YOK
-        // --------------------------------------------------
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // --------------------------------------------------
         // AUTH ENDPOINTLERİ  JWT KONTROLÜ YOK
-        // --------------------------------------------------
+
         if (path.startsWith("/api/auth")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // --------------------------------------------------
+
         //  K8s / Actuator JWT KONTROLÜ YOK
-        // --------------------------------------------------
+
         if (path.startsWith("/k8s-info") || path.startsWith("/actuator")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // --------------------------------------------------
         // Authorization Header Kontrolü
-        // --------------------------------------------------
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -64,15 +60,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        // --------------------------------------------------
         // JWT  Username
-        // --------------------------------------------------
         String jwt = authHeader.substring(7);
         String username = jwtUtil.extractUsername(jwt);
 
-        // --------------------------------------------------
+
         //  SecurityContext boşsa doğrula
-        // --------------------------------------------------
         if (username != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
@@ -98,9 +91,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
-        // --------------------------------------------------
         // DEVAM
-        // --------------------------------------------------
         filterChain.doFilter(request, response);
     }
 }

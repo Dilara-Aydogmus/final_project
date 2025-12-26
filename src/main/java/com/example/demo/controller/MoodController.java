@@ -33,9 +33,9 @@ public class MoodController {
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
     }
 
-    // ===============================
+
     // CREATE (entity dönmesi OK)
-    // ===============================
+
     @PostMapping
     public ResponseEntity<MoodEntry> createMood(@RequestBody MoodRequest request) {
         User user = getCurrentUserOrThrow();
@@ -48,9 +48,7 @@ public class MoodController {
         );
     }
 
-    // ===============================
     // TODAY DTO + MAPPER
-    // ===============================
     @GetMapping("/today")
     public ResponseEntity<MoodResponse> getTodayMood() {
 
@@ -66,9 +64,7 @@ public class MoodController {
         return ResponseEntity.ok(MoodMapper.toDto(entry));
     }
 
-    // ===============================
     // HISTORY  DTO
-    // ===============================
     @GetMapping("/history")
     public ResponseEntity<List<MoodResponse>> getHistory(
             @RequestParam(defaultValue = "7") int days
@@ -83,9 +79,7 @@ public class MoodController {
         );
     }
 
-    // ===============================
     // UPDATE
-    // ===============================
     @PutMapping("/{id}")
     public ResponseEntity<MoodEntry> updateMood(
             @PathVariable Long id,
@@ -105,9 +99,7 @@ public class MoodController {
         return ResponseEntity.ok(updated);
     }
 
-    // ===============================
     // DELETE
-    // ===============================
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMood(@PathVariable Long id) {
         User user = getCurrentUserOrThrow();
@@ -115,9 +107,7 @@ public class MoodController {
         return ResponseEntity.noContent().build();
     }
 
-    // ===============================
     // REQUEST BODY, inner class
-    // ===============================
     @lombok.Data
     public static class MoodRequest {
         private MoodType moodType;
